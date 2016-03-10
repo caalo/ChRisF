@@ -38,9 +38,9 @@ Arguments for the decoder:
 
 **-testf** filename to test the model on
 
-** -nsentence (all) ** number of sentences to train in -testf file. If 'full', all sentences will be used.
+**-nsentence (all)** number of sentences to train in -testf file. If 'full', all sentences will be used.
 
-** -loadmodel ** path to load the model
+**-loadmodel** path to load the model
 
-** -print yes, no ** whether to print detailed output, such as sample sentences and sample predicted chunk tags.
+**-print yes, no** whether to print detailed output, such as sample sentences and sample predicted chunk tags.
 
