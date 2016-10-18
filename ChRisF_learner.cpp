@@ -22,7 +22,8 @@ int main(int argc, char* argv[])	{
 	char* lambda;
 	char* clip;
 	char* nsentence;
-	char* epoch;
+	char* epoch_s;
+	char* epoch_e;
 	char* modelfile;
 	bool allSentences = false; //flag: do we want to learn all of the sentences?
 	bool toLoadModel = false; //flag: do we want to load the model from file before learning?
@@ -69,8 +70,11 @@ int main(int argc, char* argv[])	{
 						nsentence = argv[i + 1];
 					}
 					i++;
-				} else if (strcmp(argv[i], "-epoch") == 0) {
-					epoch = argv[i + 1];
+				} else if (strcmp(argv[i], "-epoch_s") == 0) {
+					epoch_s = argv[i + 1];
+					i++;
+				} else if (strcmp(argv[i], "-epoch_e") == 0) {
+					epoch_e = argv[i + 1];
 					i++;
 				}else if (strcmp(argv[i], "-loss") == 0) {
 					if (strcmp(argv[i + 1], "bayes") == 0) {
@@ -115,7 +119,8 @@ int main(int argc, char* argv[])	{
 	const int nStates = 3*3;
 	//SOME PARAMETERS
 	const float L_RATE = atof(lrate);
-	const int EPOCHS = (int)atof(epoch);
+	const int EPOCHS_S = (int)atof(epoch_s);
+	const int EPOCHS_E = (int)atof(epoch_e);
 	const float LAMBDA = atof(lambda);
 	const float CLIP = atof(clip);
 	int N_SENTENCES;
@@ -138,7 +143,7 @@ int main(int argc, char* argv[])	{
 	cout << "Learning rate: " << L_RATE << "\n";
 	cout << "Regularization rate: " << LAMBDA << endl;
 	cout << "Clip probability (xentropy only): " << CLIP << endl;
-	cout << "Number of epochs: " << EPOCHS << "\n";
+	cout << "Number of epochs: " << EPOCHS_S << ", " << EPOCHS_E << "\n";
 	cout << "Number of sentence to learn: " << N_SENTENCES << "\n";
 	if(train_mode == FULL_INFORMATION_MODE)
 		cout << "Learning mode: full information." << endl;
@@ -156,8 +161,9 @@ int main(int argc, char* argv[])	{
 	}
 
 	vector<float> losses;
+	ofstream myfile;
 
-	for (int e = 0; e < EPOCHS; e++) {
+	for (int e = EPOCHS_S; e < EPOCHS_E; e++) {
 		cout << "\nEPOCH " << e << "\n";
 
 		//LEARNING PROCESS. 
@@ -168,17 +174,29 @@ int main(int argc, char* argv[])	{
 				model.banditUpdate(i, e, X[i], Y.row(i));
 		}
 
+		//SAVE MODEL
+		myfile.open(string(modelfile) + "/" + to_string(e) + ".weight");
+		vector<pair<int, float> > modelWeights = model.getModel();
+		for(int i = 0; i < modelWeights.size(); i++) {
+			myfile << modelWeights[i].first << " " << modelWeights[i].second << endl;
+		}
+		myfile.close();
+
+		//SAVE GRADIENT
+		myfile.open(string(modelfile) + "/" + to_string(e) + ".grad");
+		vector<pair<int, float> > modelGrad = model.getGradient();
+		for(int i = 0; i < modelGrad.size(); i++) {
+			myfile << modelGrad[i].first << " " << modelGrad[i].second << endl;
+		}
+		myfile.close();
+
+		model.resetGradient();
+
+		
+
+
 	}
 
-	//SAVE MODEL
-	ofstream myfile;
-	myfile.open(modelfile);
-	vector<pair<int, float> > modelWeights = model.getModel();
-	for(int i = 0; i < modelWeights.size(); i++) {
-		myfile << modelWeights[i].first << " " << modelWeights[i].second << endl;
-	}
-
-	cout << "Model saved to: " << modelfile << "." << endl;
 
   	return 0;
 }
