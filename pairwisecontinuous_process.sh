@@ -1,6 +1,6 @@
 
 EPOCH=399
-FOLDER="oct20/bayes"
+FOLDER="oct20/pairwisecontinuous"
 
 MODEL=$FOLDER
 MODEL+="/"

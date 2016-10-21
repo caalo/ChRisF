@@ -1,6 +1,6 @@
 
-EPOCH=400
-FOLDER="oct12/pairwise"
+EPOCH=399
+FOLDER="oct20/pairwise"
 
 MODEL=$FOLDER
 MODEL+="/"
@@ -8,5 +8,5 @@ MODEL+=$EPOCH
 MODEL+=".weight"
 
 ./ChRisF_decoder -testf test.txt -nsentence all -loadmodel $MODEL -print yes
-Rscript lipschitz_compute.R $FOLDER $EPOCH 500
-Rscript grad_compute.R $FOLDER $EPOCH
+Rscript lipschitz_compute_v2.R $FOLDER $EPOCH 300
+Rscript grad_compute_v2.R $FOLDER $EPOCH

@@ -31,7 +31,7 @@ int main(int argc, char* argv[])	{
 	int train_mode = FULL_INFORMATION_MODE;
 	if (argc <8*2) {
 		cout << "Not enough or invalid arguments, please try again." << endl;
-		cout << "Usage is -mode (full, bandit) -loadmodel (none) -trainf -lrate -lambda -clip -nsentence (full) -epoch -loss: (bayes, crossentropy, crossentropymomentum, crossentropyadadelta pairwise, probit, pairwisecrossentropy) -savemodel" << endl;
+		cout << "Usage is -mode (full, bandit) -loadmodel (none) -trainf -lrate -lambda -clip -nsentence (full) -epoch -loss: (bayes, crossentropy, crossentropymomentum, crossentropyadadelta pairwise, probit, pairwisecrossentropy, pairwisecontinuous) -savemodel" << endl;
 		exit(0);
 	} else {
 		for (int i = 1; i < argc; i++) {
@@ -98,6 +98,9 @@ int main(int argc, char* argv[])	{
 					}else if (strcmp(argv[i + 1], "crossentropymomentum") == 0) {
 						lossFunction = CrossEntropyMomentum;
 						cout << "Xentropy momentum" << endl;
+					}else if(strcmp(argv[i + 1], "pairwisecontinuous") == 0) {
+						lossFunction = PairwiseContinuous;
+						cout << "PairwiseContinuous" << endl;
 					}
 					i++;
 				}else if (strcmp(argv[i], "-savemodel") == 0) {
@@ -105,7 +108,7 @@ int main(int argc, char* argv[])	{
 					i++;
 				} else {
 					cout << "Not enough or invalid arguments, please try again." << endl;
-					cout << "Usage is -mode (full, bandit) -loadmodel (none) -trainf -lrate -lambda -clip -nsentence (full) -epoch -loss: (bayes, crossentropy, crossentropymomentum, crossentropyadadelta pairwise, probit, pairwisecrossentropy) -savemodel" << endl;
+					cout << "Usage is -mode (full, bandit) -loadmodel (none) -trainf -lrate -lambda -clip -nsentence (full) -epoch -loss: (bayes, crossentropy, crossentropymomentum, crossentropyadadelta pairwise, probit, pairwisecrossentropy, pairwisecontinuous) -savemodel" << endl;
 				 	exit(0);
             		}
 			}
@@ -183,6 +186,7 @@ int main(int argc, char* argv[])	{
 		myfile.close();
 
 		//SAVE GRADIENT
+		/*
 		myfile.open(string(modelfile) + "/" + to_string(e) + ".grad");
 		vector<pair<int, float> > modelGrad = model.getGradient();
 		for(int i = 0; i < modelGrad.size(); i++) {
@@ -191,6 +195,7 @@ int main(int argc, char* argv[])	{
 		myfile.close();
 
 		model.resetGradient();
+		*/
 
 		
 

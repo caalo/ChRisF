@@ -41,7 +41,7 @@ for(i in 0:(epochs - 1)) {
 		gradVar[i] = diff %*% diff
 
 		if(i == epochs - 1) {
-			cat("\n", "grad norm at last epoch: ", grad_i %*% grad_i, "\n")
+			cat("\n", "grad norm at last epoch: ", (grad_i/nSentences) %*% (grad_i/nSentences), "\n")
 		}
 	}
 }
