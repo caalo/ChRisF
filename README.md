@@ -1,9 +1,9 @@
 # ChRisF
-Conditional Random Fields (CRFs) implementation for partial feedback learning environments
+Conditional Random Fields (CRFs) implementation for partial feedback learning environments.
 
-See sec-chris-long.pdf for a detailed description of CRFs and our implentation on the text chunking task. 
+See *sec-chris-long.pdf* for a detailed description of CRFs and our implentation on the text chunking task. 
 For details of the partial feedback learning environment, our conference paper, "Learning Structured Predictors from Bandit Feedback
-for Interactive NLP", was accecpted to the Association of Computational Linguistics 2016 conference and the paper can be found at ACL2016.pdf
+for Interactive NLP", was accecpted to the Association of Computational Linguistics 2016 conference and the paper can be found at *ACL2016.pdf*. Additionally, the model was benchmarked for "Stochastic Structured Prediction under Bandit Feedback", accepted for NIPS 2016 conference. 
 
 To run:
 
