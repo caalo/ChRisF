@@ -7,7 +7,7 @@ for Interactive NLP", was accecpted to the Association of Computational Linguist
 
 To run:
 
-ChRisF_learner trains our CRF under partial feedback or full information environments on the chunking dataset (http://www.cnts.ua.ac.be/conll2000/chunking/)
+ChRisF_learner trains our CRF under partial feedback or full information environments on the chunking dataset (https://www.clips.uantwerpen.be/conll2000/chunking/)
 
 ChRisF_decoder decodes the model (in .crf extension) via standard Viterbi decoding.
 
