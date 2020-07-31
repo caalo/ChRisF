@@ -19,7 +19,7 @@ typedef vector<string> StrVec;
 typedef vector<StrVec> StrMat;
 
 typedef vector<vector<vector<int> > > Ukeys; //indexed by nodes, states
-enum LossFunction {NotLearning, Bayes, Pairwise, CrossEntropyAdadelta, Probit, PairwiseCrossEntropy, CrossEntropy, CrossEntropyMomentum, CrossEntropyUniform};
+enum LossFunction {NotLearning, Bayes, Pairwise, CrossEntropyAdadelta, Probit, PairwiseCrossEntropy, CrossEntropy, CrossEntropyMomentum, CrossEntropyUniform, PairwiseContinuous};
 
 struct Potentials {
 	vector<Mat> M;
@@ -39,6 +39,8 @@ class CRFChunkModel {
 	float *blankweights; //used only for crossentropy uniform
 	double ZNorm;
 	vector<Ukeys> allUnaryKeys;
+
+	float *gradient;
 
 	/*accumulated gradient, update. For ADADELTA learning rate implemenation.
 	Cross entropy for now. */
@@ -369,7 +371,8 @@ class CRFChunkModel {
 	void reset() {
 		std::fill_n(features, CRFMath::HASH_SIZE, 0);
 		std::fill_n(expectedFeatures, CRFMath::HASH_SIZE, 0);
-		if(lossFunction == Pairwise || lossFunction == PairwiseCrossEntropy) {
+
+		if(lossFunction == Pairwise || lossFunction == PairwiseContinuous || lossFunction == PairwiseCrossEntropy) {
 			std::fill_n(features2, CRFMath::HASH_SIZE, 0);
 			std::fill_n(expectedFeatures2, CRFMath::HASH_SIZE, 0);
 			std::fill_n(weights2, CRFMath::HASH_SIZE, DEFAULT_WEIGHT);
@@ -450,9 +453,12 @@ class CRFChunkModel {
 		
 		weights = new float[CRFMath::HASH_SIZE];
 		std::fill_n(weights, CRFMath::HASH_SIZE, DEFAULT_WEIGHT);
+
+		gradient = new float[CRFMath::HASH_SIZE];
+		std::fill_n(gradient, CRFMath::HASH_SIZE, 0);
 		
 		features = new float[CRFMath::HASH_SIZE];
-		if(lossFunction == Pairwise || lossFunction == PairwiseCrossEntropy) {
+		if(lossFunction == Pairwise || lossFunction == PairwiseCrossEntropy || lossFunction == PairwiseContinuous) {
 			features2 = new float[CRFMath::HASH_SIZE];	
 			weights2 = new float[CRFMath::HASH_SIZE];	
 			expectedFeatures2 = new float[CRFMath::HASH_SIZE];	
@@ -490,12 +496,15 @@ class CRFChunkModel {
 
 		std::fill_n(weights, CRFMath::HASH_SIZE, DEFAULT_WEIGHT);
 
+		gradient = new float[CRFMath::HASH_SIZE];
+		std::fill_n(gradient, CRFMath::HASH_SIZE, 0);
+
 		for(int i = 0; i < toLoad.size(); i++) {
 			weights[toLoad[i].first] = toLoad[i].second;
 		}
 		
 		features = new float[CRFMath::HASH_SIZE];
-		if(lossFunction == Pairwise || lossFunction == PairwiseCrossEntropy) {
+		if(lossFunction == Pairwise || lossFunction == PairwiseCrossEntropy || lossFunction == PairwiseContinuous) {
 			features2 = new float[CRFMath::HASH_SIZE];	
 			weights2 = new float[CRFMath::HASH_SIZE];	
 			expectedFeatures2 = new float[CRFMath::HASH_SIZE];	
@@ -522,7 +531,8 @@ class CRFChunkModel {
 		delete[] weights;
 		delete[] expectedFeatures;
 		delete[] features;
-		if(lossFunction == Pairwise) {
+		delete[] gradient;
+		if(lossFunction == Pairwise || lossFunction == PairwiseContinuous) {
 			delete[] weights2;
 			delete[] expectedFeatures2;
 			delete[] features2;
@@ -552,6 +562,23 @@ class CRFChunkModel {
 			}
 		}
 		return list;
+	}
+
+	vector<pair<int, float> > getGradient() {
+		vector<pair<int, float> > list;
+		for(int i = 0; i < CRFMath::HASH_SIZE; i++) {
+			if (gradient[i] != 0) {
+				pair<int, float> p;
+				p.first = i;
+				p.second = gradient[i];
+				list.push_back(p);
+			}
+		}
+		return list;
+	}
+
+	void resetGradient() {
+		std::fill_n(gradient, CRFMath::HASH_SIZE, 0);
 	}
 
 
@@ -709,7 +736,7 @@ class CRFChunkModel {
 			feedback = CRFMath::F1_chunk(Ysample, Ydata, sqStates, false).F1;	
 			updateConst = feedback;
 			
-		} else if(lossFunction == Pairwise) {
+		} else if(lossFunction == Pairwise || lossFunction == PairwiseContinuous) {
 			vector<int> keys;
 			for(int i = 0; i < nStates; i++)
 				for(int j = 0; j < nStates; j++)
@@ -729,8 +756,11 @@ class CRFChunkModel {
 			float l1 = CRFMath::F1_chunk(Ysample, Ydata, sqStates, false).F1;
 			float l2 = CRFMath::F1_chunk(Ysample2, Ydata, sqStates, false).F1;
 			if (l1 > l2) {
-				//feedback = 0; //a loss function
-				feedback = 1 - (l1 - l2);
+				if(lossFunction == PairwiseContinuous) {
+					feedback = 1 - (l1 - l2);
+				}else {
+					feedback = 0; //a loss function
+				}
 			} else {
 				feedback = 1;
 			}
@@ -799,9 +829,11 @@ class CRFChunkModel {
 		for(int k : keys) {
 			if(lossFunction == Bayes) {
 				weights[k] -= (lrate * feedback) * (features[k] - expectedFeatures[k]) + (lrate * lambda * weights[k]); 
-			}else if(lossFunction == Pairwise)
+				//gradient[k] += (lrate * feedback) * (features[k] - expectedFeatures[k]) + (lrate * lambda * weights[k]); 
+			}else if(lossFunction == Pairwise || lossFunction == PairwiseContinuous) {
 				weights[k] -= (lrate * feedback) * ((features[k] - features2[k]) - (expectedFeatures[k] - expectedFeatures2[k])) + (lrate * lambda * weights[k]);
-			else if(lossFunction == PairwiseCrossEntropy)
+				//gradient[k] += (lrate * feedback) * ((features[k] - features2[k]) - (expectedFeatures[k] - expectedFeatures2[k])) + (lrate * lambda * weights[k]);
+			}else if(lossFunction == PairwiseCrossEntropy)
 				weights[k] -= updateConst * (-features[k] + features2[k] + expectedFeatures[k] - expectedFeatures2[k]) + (lrate * lambda * weights[k]);
 			else if(lossFunction == Probit) 
 				weights[k] += lrate * feedback * (weights2[k] - weights[k]);
@@ -824,6 +856,7 @@ class CRFChunkModel {
 				lastUpdated[k] = t;
 			}else if(lossFunction == CrossEntropy) {
 				weights[k] -= lrate * updateConst * (-features[k] + expectedFeatures[k]) + (lrate * lambda * weights[k]);
+				//gradient[k] += lrate * updateConst * (-features[k] + expectedFeatures[k]) + (lrate * lambda * weights[k]);
 			}
 			else if (lossFunction == CrossEntropyMomentum) {
 				const float meu = std::min(.99, 1 - pow(2, -1 - log2(floor(epoch / (.15 * (1 / lrate))) + 1)));
@@ -847,10 +880,12 @@ class CRFChunkModel {
 			for (int j = 0; j < nStates; j++) {
 				for (int k : currentUKey[i][j]) {
 					if(lossFunction == Bayes) {
-						weights[k] -= (lrate * feedback) * (features[k] - expectedFeatures[k]) + (lrate * lambda * weights[k]);    
-					}else if(lossFunction == Pairwise)
+						weights[k] -= (lrate * feedback) * (features[k] - expectedFeatures[k]) + (lrate * lambda * weights[k]);   
+						//gradient[k] += (lrate * feedback) * (features[k] - expectedFeatures[k]) + (lrate * lambda * weights[k]);  
+					}else if(lossFunction == Pairwise || lossFunction == PairwiseContinuous) {
 						weights[k] -= (lrate * feedback) * ((features[k] - features2[k]) - (expectedFeatures[k] - expectedFeatures2[k])) + (lrate * lambda * weights[k]);
-					else if(lossFunction == PairwiseCrossEntropy)
+						//gradient[k] += (lrate * feedback) * ((features[k] - features2[k]) - (expectedFeatures[k] - expectedFeatures2[k])) + (lrate * lambda * weights[k]);
+					}else if(lossFunction == PairwiseCrossEntropy)
 						weights[k] -= updateConst * (-features[k] + features2[k] + expectedFeatures[k] - expectedFeatures2[k]) + (lrate * lambda * weights[k]);
 					else if(lossFunction == Probit) 
 						weights[k] += lrate * feedback * (weights2[k] - weights[k]);	
@@ -873,6 +908,7 @@ class CRFChunkModel {
 						lastUpdated[k] = t;
 					}else if(lossFunction == CrossEntropy) {
 						weights[k] -= lrate * updateConst * (-features[k] + expectedFeatures[k]) + (lrate * lambda * weights[k]);
+						//gradient[k] += lrate * updateConst * (-features[k] + expectedFeatures[k]) + (lrate * lambda * weights[k]);
 					}else if (lossFunction == CrossEntropyMomentum) {
 						int timeSinceUpdate = 0;
 						const float meu = std::min(.99, 1 - pow(2, -1 - log2(floor(epoch / (.15 * (1 / lrate))) + 1)));
