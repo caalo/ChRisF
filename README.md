@@ -9,10 +9,10 @@ We tested this framework on problems in Natural Language Processing (NLP), focus
 
 ### Analysis 
 
-Analysis writeup can be found under `writeup/`, featuring two conference papers: "Learning Structured Predictors from Bandit Feedback for Interactive NLP", was accecpted to the Association of Computational Linguistics 2016 conference. "Stochastic Structured Prediction under Bandit Feedback", accepted for Neural Information Processing Systems 2016 conference 2016 conference. 
+Analysis writeup can be found under `writeup/`, featuring two conference papers: "Learning Structured Predictors from Bandit Feedback for Interactive NLP", was accecpted to the Association of Computational Linguistics 2016 conference. "Stochastic Structured Prediction under Bandit Feedback", accepted for Neural Information Processing Systems 2016 conference.
 ### Running the software 
 
-Under 'src/', 
+Under `src/`, 
 
 #### Using existing scripts
 
