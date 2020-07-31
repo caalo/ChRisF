@@ -24,9 +24,9 @@ Under `src/`,
 
 #### Directly from the software
 
-*ChRisF_learner* trains our CRF under partial feedback or full information environments on the chunking dataset (https://www.clips.uantwerpen.be/conll2000/chunking/). The data is already in the folder.
+*ChRisF_learner* trains our CRF under partial feedback or full information environments on the chunking dataset (https://www.clips.uantwerpen.be/conll2000/chunking/). The data is already in the folder. Outputs a model file in `.crf` format. 
 
-*ChRisF_decoder* decodes the model (in .crf extension) via standard Viterbi decoding.
+*ChRisF_decoder* decodes the `.crf` model via standard Viterbi decoding.
 
 Arguments for the learner:
 
