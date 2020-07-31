@@ -48,15 +48,15 @@ Arguments for the learner:
 
 **-loss: (bayes, crossentropy, crossentropymomentum, crossentropyadadelta pairwise, probit, pairwisecrossentropy)** type of loss function to use when the -mode = bandit. See details described in sec-chris-long.pdf and the paper.
 
-**-savemodel** path to save the model
+**-savemodel** path to save the model.
 
 Arguments for the decoder:
 
 **-testf** filename to test the model on.
 
-**-nsentence (all)** number of sentences to train in -testf file. If 'full', all sentences will be used.
+**-nsentence (all)** number of sentences to train in -testf file. If 'all', all sentences will be used.
 
 **-loadmodel** path to load the model.
 
-**-print yes, no** whether to print detailed output, such as sample sentences and sample predicted chunk tags.
+**-print (yes, no)** whether to print detailed output, such as sample sentences and sample predicted chunk tags.
 
